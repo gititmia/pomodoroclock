@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang='en'></html>
+<head>
+	<meta charset="utf-8">
+	<meta name='viewport' content='width=device-width, initial-scale=1.0'>
+
+	<link rel="preload" href="https://drive.google.com/uc?id=1AtH6xr8yHfqUQXcC8pBwWVrJNDOcKCrA" as="image">
+	<link rel="preload" href="https://drive.google.com/uc?id=1Zx8BBZFQALbKDVyC_epkl8r92IaSqQVs" as="image">
+
+	<link rel='preload' href='https://drive.google.com/uc?id=1Z2SajrzqpLSAJx8HmZ4iqyoBoVTcwe2r' as='audio'>
+
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
+</head>
+<body>
+	<title>Pomodoro Clock</title>
+	<h2 id='timer-label'>Pomodoro Clock</h2>
+
+	<div id='break-label'>Break Length<div class='custom-line-break'></div>
+	<button id='break-decrement'></button>
+	<button id='break-increment'></button>
+	<div id='break-length'>5</div>
+	</div>
+
+	<div id='session-label'>Session Length<div class='custom-line-break'></div>
+	<button id='session-decrement'></button>
+	<button id='session-increment'></button>
+	<div id='session-length'>25</div>
+	</div>
+
+	<div id='time-left'></div>
+	<audio id='beep' preload='auto' src='https://drive.google.com/uc?id=1Z2SajrzqpLSAJx8HmZ4iqyoBoVTcwe2r' type='audio/mpeg'></audio>
+	<button id='start_stop'>Start/Stop</button>
+	<button id='reset'>Reset</button>
+
+	<style type="text/css">
+		html {
+			font-family: system-ui;
+			background-color: #fce6f8;
+		}
+
+		#timer-label {
+			margin: 0 auto;
+			text-align: center;
+			padding-top: 12px;
+		}
+
+		#break-label {
+			position: absolute;
+            top: 23%;
+            left: 25%;
+            transform: translate(-50%, -50%);
+            font-size: 25px;
+            text-align: center;
+
+		}
+
+		.custom-line-break {
+			content: '';
+			display: block;
+			height: 30px;
+		}
+
+		#session-label {
+			position: absolute;
+            top: 23%;
+            right: 15%;
+            transform: translate(-50%, -50%);
+            font-size: 25px;
+            text-align: center;
+
+		}
+
+		button {
+			border-radius: 45px;
+			border: none;
+			height: 60px;
+			width: 60px;
+			background-color: white;
+			font-size: 18px;
+		}
+
+		button:hover {
+			cursor: pointer;
+		}
+
+		#break-decrement {
+			margin-right: 70px;
+			background-image: url('https://drive.google.com/uc?id=1AtH6xr8yHfqUQXcC8pBwWVrJNDOcKCrA');
+			background-size: cover;
+		}
+
+		#break-increment {
+			background-image: url('https://drive.google.com/uc?id=1Zx8BBZFQALbKDVyC_epkl8r92IaSqQVs');
+			background-size: cover;
+		}
+
+		#break-length {
+			position: absolute;
+            top: 87px;
+            left: 97px;
+            transform: translate(-50%, -50%);
+            font-size: 25px;
+            text-align: center;
+		}
+
+		#session-decrement {
+			margin-right: 70px;
+			background-image: url('https://drive.google.com/uc?id=1AtH6xr8yHfqUQXcC8pBwWVrJNDOcKCrA');
+			background-size: cover;
+		}
+
+		#session-increment {
+			background-image: url('https://drive.google.com/uc?id=1Zx8BBZFQALbKDVyC_epkl8r92IaSqQVs');
+			background-size: cover;
+		}
+
+		#session-length {
+			position: absolute;
+            top: 87px;
+            left: 97px;
+            transform: translate(-50%, -50%);
+            font-size: 25px;
+            text-align: center;
+		}
+
+		#time-left {
+			position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 70px;
+            text-align: center;
+		}
+
+		#start_stop {
+			position: absolute;
+            top: 75%;
+            left: 43%;
+            transform: translate(-50%, -50%);
+            font-size: 25px;
+            text-align: center;
+            border-radius: 10px;
+            height: 60px;
+            width: 150px;
+		}
+
+		#start_stop:hover {
+			background-color: #8bd989;
+		}
+
+		#start_stop:active {
+			background-color: #75b574;
+			transition: background-color 0.3s;
+		}
+
+		#reset {
+			position: absolute;
+            top: 75%;
+            right: 33%;
+            transform: translate(-50%, -50%);
+            font-size: 25px;
+            text-align: center;
+            border-radius: 10px;
+            height: 60px;
+            width: 150px;
+		}
+
+		#reset:hover {
+			background-color: #f77777;
+		}
+
+		#reset:active {
+			background-color: #f75c5c;
+			transition: background-color 0.3s;
+		}
+
+	</style>
+
+	<script type="text/javascript">
+		const timerState = {
+			isRunning: false,
+			timer: null,
+			sessionLength: parseInt(document.getElementById('session-length').innerText) * 60,
+			breakLength: parseInt(document.getElementById('break-length').innerText) * 60,
+			currentTimer: 'session',
+			nextTimer: 'break',
+		};
+
+		document.getElementById('break-decrement').addEventListener('click', () => {
+			if (!timerState.isRunning) {
+			breakDecrement();
+			updateTimeLeft();
+			}
+		});
+
+		document.getElementById('break-increment').addEventListener('click', () => {
+			if (!timerState.isRunning) {
+			breakIncrement();
+			updateTimeLeft();
+			}
+		});
+
+		document.getElementById('session-decrement').addEventListener('click', () => {
+			if (!timerState.isRunning) {
+			sessionDecrement();
+			updateTimeLeft();
+			}
+		});
+
+		document.getElementById('session-increment').addEventListener('click', () => {
+			if (!timerState.isRunning) {
+			sessionIncrement();
+			updateTimeLeft();
+			}
+		});
+
+		document.getElementById('start_stop').addEventListener('click', () => {
+			startStopTime();
+		});
+
+		document.getElementById('reset').addEventListener('click', () => {
+			resetTime();
+		});
+
+		function breakDecrement() {
+			const currentNumber = document.getElementById('break-length');
+			let newValue = parseInt(currentNumber.innerText) - 1;
+			if (newValue > 0) {
+				currentNumber.innerText = newValue;
+				timerState.breakLength = newValue * 60;
+			}
+		}
+
+		function breakIncrement() {
+			const currentNumber = document.getElementById('break-length');
+			let newValue = parseInt(currentNumber.innerText) + 1;
+			if (newValue <= 60) {
+				currentNumber.innerText = newValue;
+				timerState.breakLength = newValue * 60;
+			}
+		}
+
+		function sessionDecrement() {
+			const currentNumber = document.getElementById('session-length');
+			let newValue = parseInt(currentNumber.innerText) - 1;
+			if (newValue > 0) {
+				currentNumber.innerText = newValue;
+				timerState.sessionLength = newValue * 60;
+			}
+		}
+
+		function sessionIncrement() {
+			const currentNumber = document.getElementById('session-length');
+			let newValue = parseInt(currentNumber.innerText) + 1;
+			if (newValue <= 60) {
+				currentNumber.innerText = newValue;
+				timerState.sessionLength = newValue * 60;
+			}			
+		}
+
+		function updateTimeLeft() {
+			const minutes = Math.floor(timerState.sessionLength / 60);
+			const seconds = timerState.sessionLength % 60;
+
+			const timeLeftElement = document.getElementById('time-left');
+			timeLeftElement.innerText = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+
+			const timerLabel = document.getElementById('timer-label');
+			let intermediateMessage = '';
+
+			if (timerState.sessionLength === 0) {
+				intermediateMessage = timerState.currentTimer === 'session' ? 'Here\'s your break!' : 'Let\'s get back to work!';
+				switchTimer();
+				audioBeepBeep();
+			}
+
+			if (intermediateMessage) {
+				timerLabel.innerText = intermediateMessage;
+
+				setTimeout(() => {
+					timerLabel.innerText = 'Pomodoro Clock';
+				}, 5000)
+			}
+		}
+
+		function startStopTime() {
+			if (timerState.isRunning) {
+				clearInterval(timerState.timer);
+			} else {
+				timerState.timer = setInterval(() => {
+					if (timerState.sessionLength <= 0) {
+						clearInterval(timerState.timer);
+					} else {
+						timerState.sessionLength--;
+					updateTimeLeft();
+					}
+				}, 1000)
+			}
+			timerState.isRunning = !timerState.isRunning;
+		}
+			
+		function resetTime() {
+            if (timerState.isRunning) {
+                clearInterval(timerState.timer);
+                timerState.isRunning = false;
+            }
+            timerState.sessionLength = 25 * 60;
+            timerState.breakLength = 5 * 60;
+            timerState.currentTimer = 'session';
+            timerState.nextTimer = 'break';
+            updateDefaults();
+        }
+
+        function updateDefaults() {
+            document.getElementById('session-length').innerText = timerState.sessionLength / 60;
+            document.getElementById('break-length').innerText = timerState.breakLength / 60;
+            updateTimeLeft();
+        }
+
+        function switchTimer() {
+            if (timerState.currentTimer === "session") {
+                timerState.nextTimer = "break";
+                timerState.sessionLength = timerState.breakLength;
+            } else {
+                timerState.nextTimer = "session";
+                timerState.breakLength = timerState.sessionLength;
+            }
+        }
+
+        function audioBeepBeep() {
+        	const audio = document.getElementById('beep');
+        	audio.play()
+        }
+
+        updateDefaults();
+
+	</script>
+</body>
+</html>
